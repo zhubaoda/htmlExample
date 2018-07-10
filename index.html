@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>html</title>
+<style>
+    
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/zclip/1.1.2/jquery.zclip.min.js"></script>
+<style type="text/css">
+  *{
+    margin:0;padding:0;
+  }
+	.box {
+		width: 80%;
+		position: relative;
+		border: 1px solid #ccc;
+		line-height: 24px;
+		border-radius: 0 0 5px 5px;
+		box-shadow: 0 0 1px #ccc;
+	}
+	.top {
+		height: 40px;
+		border: 1px solid #ccc;
+		border-bottom: none;
+		background-color: #f1f1f1;
+		box-shadow: 0 0 1px #ccc;
+	}
+	.content {
+		width: 98%;
+		padding: 10px 1%;
+		min-height: 100px;
+	}
+	.button {
+		display: inline-block;
+		height: 40px;
+		line-height: 40px;
+		cursor: pointer;
+		color: #5182e8;
+		margin-left: 12px;
+		font-weight: 700;
+		border: none;
+		font-size: 16px;
+		background-color: #f1f1f1;
+		outline:none;
+	}
+	.cursor-pointer {
+    cursor: pointer;
+  }
+	a {
+    color: #337ab7;
+    text-decoration: none;
+  }
+	.black {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100vw;
+		height: 100vh;
+		background: rgba(0,0,0,.6);
+		z-index: 20;
+	}
+	.white {
+		background: #fff;
+		padding: 15px;
+		margin: auto;
+	}
+</style>
+</head>
+<body>
+	<div class="box">
+		<div class="top">
+	    <button class="button" id="button">链接</button>
+	    <button class="button" id="button2">昵称</button>
+		</div>
+    <div contentEditable="true" class="content"  id="test"></div>
+		<!--弹出窗-->
+		<div class="black" id="black">
+			<div class="white">
+				<input type="text" value="" palceholder="请输入文本" id="openInp" />
+				<input type="text" value="" palceholder="请输入地址" id="paths" />
+				<button type="button" onclick="getValue();">确定</button>
+			</div>
+		</div>
+	</div>
+	
+	
+	<script language="javascript" type="text/javascript">
+		  // 页面加载的时候让弹出窗消失
+		  window.onload = function () {
+				document.getElementById('black').style.display = 'none';		
+			}
+			
+			// 定义全局变量存放弹出时候window.getSelection， sel.getRangeAt(0)
+      var sel, range;
+			
+			// 弹出的情况
+			document.getElementById('button').onclick = function () {
+				window.doms = null;
+				document.getElementById('black').style.display = 'block';
+				document.getElementById('test').focus();
+				range = save ();
+				console.log(window.sel)
+				sel = window.sel;
+			}
+						
+			// 保存window.getSelection， sel.getRangeAt(0)
+			function save () {
+				if (window.getSelection) {
+					window.sel = window.getSelection();
+					if (window.sel.rangeCount > 0) {
+						return window.sel.getRangeAt(0)
+					} 
+				} else if (document.selection) {
+					window.sel = document.selection;
+					return window.sel.createRange();
+				}
+				return null;
+			}
+			
+			// 获取要输入到富文本的内容
+			function getValue () {
+				var val, href;
+				document.getElementById('test').focus(); 
+				val = document.getElementById('openInp').value;
+				href = document.getElementById('paths').value;		
+				if (window.doms) {
+					window.doms.text(val);
+					window.doms.attr('href', href);
+					range.collapse(true);
+					sel.removeAllRanges();
+					sel.addRange(range);
+					
+					document.getElementById('black').style.display = 'none';
+					
+				} else {
+					openBlackInsert(val, href);
+				}
+				
+			}
+ 			
+			function openBlackInsert(html, href) {
+					range.deleteContents();
+					var el = document.createElement("div");
+					var hrefs = document.createElement("a");
+					hrefs.className = 'cursor-pointer';
+					hrefs.href = href;
+					hrefs.target = "_blank";
+					hrefs.id = 'LINK';
+					hrefs.contentEditable = false;
+					hrefs.innerHTML = html;
+					
+					el.appendChild(hrefs);
+					var frag = document.createDocumentFragment(), node, lastNode;
+					while ( (node = el.firstChild) ) {
+						lastNode = frag.appendChild(node);
+					}
+					range.insertNode(frag);		
+					if (lastNode) {
+						range = range.cloneRange();
+						range.setStartAfter(lastNode);
+						range.collapse(true);
+						sel.removeAllRanges();
+						sel.addRange(range);
+					}
+					document.getElementById('black').style.display = 'none'
+					$("#test").on("click", ".cursor-pointer", function(){
+						window.doms = $(this);
+					  document.getElementById('black').style.display = 'block';
+						return false
+					})			
+			}
+			
+			
+			
+			
+			// 不弹出的情况
+			document.getElementById('button2').onclick = function () {
+				document.getElementById('test').focus();
+				var html = document.getElementById('button2').innerHTML;
+				range = save ();
+				insertHtmlAtCaret(html);
+			}
+	
+			function insertHtmlAtCaret(html) {
+				var sel, range;
+				if (window.getSelection) {
+					sel = window.getSelection();
+					if (sel.getRangeAt && sel.rangeCount) {
+						range = sel.getRangeAt(0);
+						range.deleteContents();
+						var el = document.createElement("div");
+						var spans = document.createElement("span");
+						spans.contentEditable = false;
+						spans.style = 'color: #fff;border-radius: 5px; background: red; font-size: 12px;padding: 2px 6px;pointer-events: none;';
+						spans.innerHTML = html;			
+						el.appendChild(spans);
+						var frag = document.createDocumentFragment(), node, lastNode;
+						
+						while ( (node = el.firstChild) ) {
+						  lastNode = frag.appendChild(node);
+						}
+						range.insertNode(frag);
+					
+						if (lastNode) {
+							range = range.cloneRange();
+							range.setStartAfter(lastNode);
+							range.collapse(true);
+							sel.removeAllRanges();
+							sel.addRange(range);
+						}
+					}
+				} else if (document.selection && document.selection.type != "Control") {
+				  document.selection.createRange().pasteHTML(html);
+				}
+		 }
+  </script>
+</body>
+</html>
