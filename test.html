@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>html</title>
+<style>
+ *{
+ 	margin:0;padding:0;
+ }
+ .box {
+ 	width: 80%;
+ 	position: relative;
+ 	border: 1px solid #ccc;
+ 	line-height: 24px;
+ 	border-radius: 0 0 5px 5px;
+ 	box-shadow: 0 0 1px #ccc;
+ 	overflow: hidden;
+ }
+ .top {
+ 	height: 40px;
+ 	border: 1px solid #ccc;
+ 	border-bottom: none;
+ 	background-color: #f1f1f1;
+ 	box-shadow: 0 0 1px #ccc;
+ }
+ .content {
+ 	width: 98%;
+ 	padding: 10px 1%;
+ 	min-height: 100px;
+ }
+ .button {
+ 	display: inline-block;
+ 	height: 40px;
+ 	line-height: 40px;
+ 	cursor: pointer;
+ 	color: #5182e8;
+ 	margin-left: 12px;
+ 	font-weight: 700;
+ 	border: none;
+ 	font-size: 16px;
+ 	background-color: #f1f1f1;
+ 	outline:none;
+ }
+ .cursor-pointer {
+ 	cursor: pointer;
+ }
+ a {
+ 	color: #337ab7;
+ 	text-decoration: none;
+ }
+ .black {
+ 	position: fixed;
+ 	top: 0;
+ 	left: 0;
+ 	width: 100vw;
+ 	height: 100vh;
+ 	background: rgba(0,0,0,.6);
+ 	z-index: 20;
+ }
+ .white {
+ 	background: #fff;
+ 	padding: 15px;
+ 	margin: auto;
+ }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.16/vue.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+</head>
+<body>
+  <div id="box" class="box">
+	  <div class="top">
+	  	<button class="button" 
+				v-for="(todo, index) in arr1" 
+				key="index" @click="addInfo(todo, 'test1')">
+				{{todo.word}}
+			</button> 	
+	  </div>
+	  <div contentEditable="true" class="content" id="test1"></div>
+		<div class="top" style="margin-top: 20px">
+			<button class="button" 
+				v-for="(todo, index) in arr2" 
+				key="index" @click="addInfo(todo, 'test2')">
+				{{todo.word}}
+			</button> 	
+		</div>
+		<div contentEditable="true" class="content" id="test2"></div>
+	  <!--弹出窗-->
+	  <div class="black" id="black" v-show="show">
+	  	<div class="white">
+	  		<input type="text" value="" palceholder="请输入文本" v-model="txtVal" />
+	  		<input type="text" value="" palceholder="请输入地址" v-model="pathVal"/>
+	  		<button type="button" @click="getValue()">确定</button>
+	  	</div>
+	  </div>
+  </div>
+  <script>
+		 var app = new Vue({
+			 el: '#box',
+			 data: {
+				 arr1: [{
+					 isTrue: 1,
+					 word: '链接1'
+				 },{
+					 isTrue: !1,
+					 word: '昵称1'
+				 }],
+				 arr2: [{
+					 isTrue: 1,
+					 word: '链接2'
+				 },{
+					 isTrue: !1,
+					 word: '昵称2'
+				 }],
+				 show: false,
+				 txtVal: '',
+				 pathVal: '',
+				 sel: null,
+				 range: null,
+				 doms: null,
+				 idName: null
+			 },
+			 methods: {
+				 getValue () {		 
+					 document.getElementById(this.idName).focus(); 
+					 if (this.doms) {
+					 	 this.doms.text(this.txtVal);
+					 	 this.doms.attr('href', this.pathVal);
+					 	 this.range.collapse(true);
+					 	 this.sel.removeAllRanges();
+					 	 this.sel.addRange(this.range);	
+						 document.getElementById('black').style.display = 'none';			
+					 } else {
+					 	this.openBlackInsert(this.txtVal, this.pathVal);					
+					 }			 
+				 },
+				 async addInfo (todo, name) {
+					 this.idName = name;
+					 if (todo.isTrue) { 
+					   this.doms = null;
+						 this.txtVal = '';
+						 this.pathVal = '';
+						 document.getElementById(name).focus();
+						 this.range = await this.save ();
+						 this.sel = window.sel;
+						 console.log(13131, this.range);
+						 document.getElementById('black').style.display = 'block';
+					 } else {
+						 document.getElementById(name).focus();
+						 this.range = await this.save ();
+						 this.insertHtmlAtCaret(todo.word);
+					 }
+				 },
+				 save () {
+				 	if (window.getSelection) {
+				 		window.sel = window.getSelection();
+				 		if (window.sel.rangeCount > 0) {
+				 			return window.sel.getRangeAt(0)
+				 		} 
+				 	} else if (document.selection) {
+				 		window.sel = document.selection;
+				 		return window.sel.createRange();
+				 	}
+				 	return null;
+				 },
+				 openBlackInsert(html, href) {
+					  var that = this;
+						console.log(1666, that.sel)
+				 		var el = document.createElement("div");
+				 		var hrefs = document.createElement("a");
+				 		hrefs.className = 'cursor-pointer';
+				 		hrefs.href = href;
+				 		hrefs.target = "_blank";
+				 		hrefs.contentEditable = false;
+				 		hrefs.innerHTML = html;
+				 		
+				 		el.appendChild(hrefs);
+				 		var frag = document.createDocumentFragment(), node, lastNode;
+				 		while ( (node = el.firstChild) ) {
+				 			lastNode = frag.appendChild(node);
+				 		}
+						
+				 		that.range.insertNode(frag);		
+				 		if (lastNode) {
+				 			that.range = that.range.cloneRange();
+				 			that.range.setStartAfter(lastNode);
+				 			that.range.collapse(true);
+				 			that.sel.removeAllRanges();
+				 			that.sel.addRange(that.range);
+				 		}
+				 		document.getElementById('black').style.display = 'none';
+				 		$(".box").on("click", ".cursor-pointer", function(){
+				 			that.doms = $(this);
+							that.txtVal = $(this).html();
+							that.pathVal = $(this).attr('href');
+							if ($(this).parent()[0].id) {
+								that.idName = $(this).parent()[0].id;
+							}
+							console.log(411, $(this).parent()[0].id)
+							document.getElementById('black').style.display = 'block';
+				 			return false
+				 		})			
+				 },
+				 insertHtmlAtCaret(html) {
+				 	if (window.getSelection) {
+				 		this.sel = window.getSelection();
+				 		if (this.sel.getRangeAt && this.sel.rangeCount) {
+				 			this.range = this.sel.getRangeAt(0);
+				 			this.range.deleteContents();
+				 			let el = document.createElement("div");
+				 			let spans = document.createElement("span");
+				 			spans.contentEditable = false;
+				 			spans.style = 'color: #fff;border-radius: 5px; background: red; font-size: 12px;padding: 2px 6px;pointer-events: none;';
+				 			spans.innerHTML = html;			
+				 			el.appendChild(spans);
+				 			let frag = document.createDocumentFragment(), node, lastNode;	
+				 			while ( (node = el.firstChild) ) {
+				 				lastNode = frag.appendChild(node);
+				 			}
+				 			this.range.insertNode(frag);
+				 			if (lastNode) {
+				 				this.range = this.range.cloneRange();
+				 				this.range.setStartAfter(lastNode);
+				 				this.range.collapse(true);
+				 				this.sel.removeAllRanges();
+				 				this.sel.addRange(this.range);
+				 			}
+				 		}
+				 	}
+				 }
+			 }
+		 })
+  </script>
+</body>
+</html>
